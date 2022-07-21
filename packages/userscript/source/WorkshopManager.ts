@@ -2,7 +2,7 @@ import { CacheManager } from "./CacheManager";
 import { CraftSettingsItem } from "./options/CraftSettings";
 import { TabManager } from "./TabManager";
 import { objectEntries } from "./tools/Entries";
-import { cinfo } from "./tools/Log";
+import { cdebug } from "./tools/Log";
 import { isNil, mustExist } from "./tools/Maybe";
 import { Resource, ResourceCraftable } from "./types";
 import { CraftableInfo, ResourceInfo } from "./types/craft";
@@ -291,31 +291,31 @@ export class WorkshopManager extends UpgradeManager {
         delta = this.getValueAvailable(resource) / materialAmount;
       } else {
         // Quantity of source and target resource currently available.
-        const src_available = this.getValueAvailable(resource, true);
-        const tgt_available = this.getValueAvailable(name, true);
+        const srcAvailable = this.getValueAvailable(resource, true);
+        const tgtAvailable = this.getValueAvailable(name, true);
 
         // How much source resource is consumed and target resource is crafted per craft operation.
-        const recipe_requires = materialAmount;
-        const recipe_produces = 1 + ratio;
+        const recipeRequires = materialAmount;
+        const recipeProduces = 1 + ratio;
 
         // How many crafts could we do given the amount of source resource available.
-        const crafts_possible = src_available / recipe_requires;
+        const craftsPossible = srcAvailable / recipeRequires;
 
         // How many crafts were hypothetically done to produce the current amount of target resource.
-        const crafts_done = tgt_available / recipe_produces;
+        const craftsDone = tgtAvailable / recipeProduces;
 
-        // Craft only when the crafts_possible >= crafts_done.
+        // Craft only when the craftsPossible >= craftsDone.
         // Crafting gets progressively more expensive as the amount of the target increases.
         // This heuristic gives other, cheaper, targets a chance to get built from the same source resource.
         // There is no checking if there actually exists a different target that could get built.
-        delta = 1 + crafts_possible - crafts_done;
+        delta = 1 + craftsPossible - craftsDone;
 
         // If crafting is not going to happen, explain why not.
-        const explanation_messages = true;
-        if (explanation_messages && delta < 1.0) {
-          // delta >= 1.0 when crafts_possible >= crafts_done.
-          const src_needed = recipe_requires * crafts_done;
-          cinfo(`[GLCA] not crafting '${name}' until '${resource}' >= '${src_needed}'`);
+        const explanationMessages = false;
+        if (explanationMessages && delta < 1.0) {
+          // delta >= 1.0 when craftsPossible >= craftsDone.
+          const srcNeeded = recipeRequires * craftsDone;
+          cdebug(`[GLCA] not crafting '${name}' until '${resource}' >= '${srcNeeded}'`);
         }
       }
 
