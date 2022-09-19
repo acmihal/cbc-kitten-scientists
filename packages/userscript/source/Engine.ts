@@ -1,8 +1,8 @@
 import { BonfireManager } from "./BonfireManager";
 import { CacheManager } from "./CacheManager";
 import { BonfireItem, BonfireSettingsItem } from "./options/BonfireSettings";
-import { CraftSettingsItem } from "./options/CraftSettings";
 import { SpaceItem, SpaceSettingsItem } from "./options/SpaceSettings";
+import { CraftSettingsItem } from "./options/WorkshopSettings";
 import { ReligionManager } from "./ReligionManager";
 import { ScienceManager } from "./ScienceManager";
 import { SpaceManager } from "./SpaceManager";
@@ -112,7 +112,7 @@ export class Engine {
     }
     // Unlock upgrades.
     if (this._host.options.auto.unlock.enabled) {
-      this.unlock();
+      await this.unlock();
     }
 
     // Build bonfire buildings.
@@ -129,7 +129,7 @@ export class Engine {
       this.craft();
 
       if (this._host.options.auto.craft.addition.unlockUpgrades.enabled) {
-        this._workshopManager.autoUnlock();
+        await this._workshopManager.autoUnlock();
       }
     }
 
@@ -291,16 +291,16 @@ export class Engine {
   /**
    * Upgrade all possible unlockables.
    */
-  unlock(): void {
+  async unlock(): Promise<void> {
     const upgrades = this._host.options.auto.unlock.items;
 
     // If techs (science items) are enabled...
     if (upgrades.techs.enabled && this._host.gamePage.tabs[2].visible) {
-      this._scienceManager.autoUnlock();
+      await this._scienceManager.autoUnlock();
     }
 
     if (upgrades.policies.enabled && this._host.gamePage.tabs[2].visible) {
-      this._scienceManager.autoPolicy();
+      await this._scienceManager.autoPolicy();
     }
   }
 

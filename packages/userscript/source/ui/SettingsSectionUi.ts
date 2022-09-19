@@ -39,6 +39,8 @@ export abstract class SettingsSectionUi<TState> {
   /**
    * Expands the options list if true, and collapses it if false.
    * Changes the value of _itemsExpanded even if _mainChild is not defined.
+   *
+   * @param display Force a display state.
    * @returns the value of _itemsExpanded
    */
   public toggleOptions(display = !this._itemsExpanded) {
@@ -188,13 +190,13 @@ export abstract class SettingsSectionUi<TState> {
   protected _registerTriggerButton(id: string, itext: string, options: SettingTrigger) {
     return this._getTriggerButton(id, {
       onClick: () => {
-        const value = window.prompt(
+        const value = this._promptPercentage(
           this._host.i18n("ui.trigger.set", [itext]),
-          options.trigger.toFixed(2)
+          this._renderPercentage(options.trigger)
         );
 
         if (value !== null) {
-          this._host.updateOptions(() => (options.trigger = parseFloat(value)));
+          this._host.updateOptions(() => (options.trigger = value));
           this.refreshUi();
         }
       },
@@ -404,12 +406,16 @@ export abstract class SettingsSectionUi<TState> {
     option.$max = maxButton;
 
     maxButton.on("click", () => {
-      const value = window.prompt(this._host.i18n("ui.max.set", [label]), option.max.toString());
+      const value = this._promptLimit(
+        this._host.i18n("ui.max.set", [label]),
+        option.max.toString()
+      );
 
       if (value !== null) {
-        this._host.updateOptions(() => (option.max = parseInt(value)));
-        maxButton[0].title = option.max.toString();
-        maxButton[0].innerText = this._host.i18n("ui.max", [option.max]);
+        const limit = this._renderLimit(value);
+        this._host.updateOptions(() => (option.max = value));
+        maxButton[0].title = limit;
+        maxButton[0].innerText = this._host.i18n("ui.max", [limit]);
       }
     });
 
@@ -447,21 +453,21 @@ export abstract class SettingsSectionUi<TState> {
       triggerButton.on("click", () => {
         let value;
         if (name === "crypto") {
-          value = window.prompt(
+          value = this._promptPercentage(
             this._host.i18n("ui.trigger.crypto.set", [label]),
-            mustExist(option.trigger).toFixed(2)
+            this._renderPercentage(mustExist(option.trigger))
           );
         } else {
-          value = window.prompt(
+          value = this._promptPercentage(
             this._host.i18n("ui.trigger.set", [label]),
-            mustExist(option.trigger).toFixed(2)
+            this._renderPercentage(mustExist(option.trigger))
           );
         }
 
         if (value !== null) {
-          option.trigger = parseFloat(value);
+          option.trigger = value;
           this._host.updateOptions();
-          triggerButton[0].title = option.trigger.toFixed(2);
+          triggerButton[0].title = this._renderPercentage(option.trigger);
         }
       });
 
@@ -539,7 +545,6 @@ export abstract class SettingsSectionUi<TState> {
     //title = title || this._host.gamePage.resPool.get(name)?.title || ucfirst(name);
 
     const stock = option.stock;
-    const consume = option.consume ?? this._host.options.consume;
 
     // The overall container for this resource item.
     const container = $("<div/>", {
@@ -557,16 +562,14 @@ export abstract class SettingsSectionUi<TState> {
     // How many items to stock.
     const stockElement = $("<div/>", {
       id: `stock-value-${name}`,
-      text: this._host.i18n("resources.stock", [
-        stock === Infinity ? "∞" : this._host.gamePage.getDisplayValueExt(stock),
-      ]),
+      text: this._host.i18n("resources.stock", [this._renderLimit(stock)]),
       css: { cursor: "pointer", display: "inline-block", width: "80px" },
     });
 
     // The consume rate for the resource.
     const consumeElement = $("<div/>", {
       id: `consume-rate-${name}`,
-      text: this._host.i18n("resources.consume", [consume.toFixed(2)]),
+      text: this._host.i18n("resources.consume", [this._renderConsumeRate(option.consume)]),
       css: { cursor: "pointer", display: "inline-block" },
     });
 
@@ -590,31 +593,28 @@ export abstract class SettingsSectionUi<TState> {
     }
 
     stockElement.on("click", () => {
-      const value = window.prompt(
+      const value = this._promptLimit(
         this._host.i18n("resources.stock.set", [title]),
         option.stock.toFixed(0)
       );
       if (value !== null) {
-        const stockValue = parseInt(value);
-        this._setStockValue(name, stockValue, false);
-        stockElement.text(
-          this._host.i18n("resources.stock", [
-            stockValue === Infinity ? "∞" : this._host.gamePage.getDisplayValueExt(stockValue),
-          ])
-        );
+        this._setStockValue(name, value, false);
+        stockElement.text(this._host.i18n("resources.stock", [this._renderLimit(value)]));
         this._host.updateOptions();
       }
     });
 
     consumeElement.on("click", () => {
-      const value = window.prompt(
+      const consumeValue = this._promptPercentage(
         this._host.i18n("resources.consume.set", [title]),
-        option.consume?.toFixed(2)
+        this._renderConsumeRate(option.consume)
       );
-      if (value !== null) {
-        const consumeValue = parseFloat(value);
+      if (consumeValue !== null) {
+        // Cap value between 0 and 1.
         this._host.updateOptions(() => (option.consume = consumeValue));
-        consumeElement.text(this._host.i18n("resources.consume", [consumeValue.toFixed(2)]));
+        consumeElement.text(
+          this._host.i18n("resources.consume", [this._renderConsumeRate(consumeValue)])
+        );
       }
     });
 
@@ -682,9 +682,7 @@ export abstract class SettingsSectionUi<TState> {
     // How many items to stock.
     const stockElement = $("<div/>", {
       id: `stock-value-${name}`,
-      text: this._host.i18n("resources.stock", [
-        stock === Infinity ? "∞" : this._host.gamePage.getDisplayValueExt(stock),
-      ]),
+      text: this._host.i18n("resources.stock", [this._renderLimit(stock)]),
       css: { cursor: "pointer", display: "inline-block", width: "80px" },
     });
 
@@ -703,9 +701,12 @@ export abstract class SettingsSectionUi<TState> {
     container.append(label, stockElement, del);
 
     stockElement.on("click", () => {
-      const value = window.prompt(this._host.i18n("resources.stock.set", [title]));
+      const value = this._promptLimit(
+        this._host.i18n("resources.stock.set", [title]),
+        option.stockForReset.toFixed(0)
+      );
       if (value !== null) {
-        this._setStockValue(name, parseInt(value), true);
+        this._setStockValue(name, value, true);
       }
     });
 
@@ -771,5 +772,53 @@ export abstract class SettingsSectionUi<TState> {
     }
 
     mustExist(this._host.options.auto.craft.resources[name]).consume = value;
+  }
+
+  protected _promptLimit(text: string, defaultValue: string): number | null {
+    const value = window.prompt(text, defaultValue);
+    if (value === null) {
+      return null;
+    }
+
+    const hasSuffix = /[KMGT]$/.test(value);
+    const baseValue = value.substring(0, value.length - (hasSuffix ? 1 : 0));
+
+    let numericValue =
+      value.includes("e") || hasSuffix ? parseFloat(baseValue) : parseInt(baseValue);
+    if (hasSuffix) {
+      const suffix = value.substring(value.length - 1);
+      numericValue = numericValue * Math.pow(1000, ["", "K", "M", "G", "T"].indexOf(suffix));
+    }
+    if (numericValue === Number.POSITIVE_INFINITY || numericValue < 0) {
+      numericValue = -1;
+    }
+
+    return numericValue;
+  }
+
+  protected _promptPercentage(text: string, defaultValue: string): number | null {
+    const value = window.prompt(text, defaultValue);
+    if (value === null) {
+      return null;
+    }
+
+    // Cap value between 0 and 1.
+    return Math.max(0, Math.min(1, parseFloat(value)));
+  }
+
+  protected _renderLimit(value: number): string {
+    if (value < 0 || value === Number.POSITIVE_INFINITY) {
+      return "∞";
+    }
+
+    return this._host.gamePage.getDisplayValueExt(value);
+  }
+
+  protected _renderPercentage(value: number): string {
+    return value.toFixed(3);
+  }
+
+  protected _renderConsumeRate(consume: number | undefined): string {
+    return this._renderPercentage(consume ?? this._host.options.consume);
   }
 }

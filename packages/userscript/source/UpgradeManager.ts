@@ -11,13 +11,30 @@ export abstract class UpgradeManager {
     this._host = host;
   }
 
-  upgrade(upgrade: { label: string }, variant: "policy" | "science" | "workshop"): void {
+  async upgrade(
+    upgrade: { label: string },
+    variant: "policy" | "science" | "workshop"
+  ): Promise<boolean> {
     const button = this.getUpgradeButton(upgrade, variant);
 
-    if (!button || !button.model.enabled) return;
+    if (!button || !button.model.enabled) {
+      return false;
+    }
 
-    //need to simulate a click so the game updates everything properly
-    button.domNode.click();
+    const controller =
+      variant === "policy"
+        ? new classes.ui.PolicyBtnController(this._host.gamePage)
+        : new com.nuclearunicorn.game.ui.TechButtonController(this._host.gamePage);
+
+    this._host.gamePage.opts.noConfirm = true;
+    const success = await UpgradeManager.skipConfirm(
+      () => new Promise(resolve => controller.buyItem(button.model, undefined, resolve))
+    );
+
+    if (!success) {
+      return false;
+    }
+
     const label = upgrade.label;
 
     if (variant === "workshop") {
@@ -28,6 +45,25 @@ export abstract class UpgradeManager {
     } else if (variant === "science") {
       this._host.storeForSummary(label, 1, "research");
       this._host.iactivity("upgrade.tech", [label], "ks-research");
+    }
+
+    return true;
+  }
+
+  /**
+   * Run a piece of code that might invoke UI confirmation and
+   * skip that UI confirmation.
+   *
+   * @param action The function to run without UI confirmation.
+   * @returns Whatever `action` returns.
+   */
+  static async skipConfirm<T>(action: () => Promise<T>): Promise<T> {
+    const originalConfirm = game.ui.confirm;
+    try {
+      game.ui.confirm = () => true;
+      return await action();
+    } finally {
+      game.ui.confirm = originalConfirm;
     }
   }
 

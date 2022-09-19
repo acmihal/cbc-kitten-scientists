@@ -258,16 +258,16 @@ export class ReligionSettingsUi extends SettingsSectionUi<ReligionSettings> {
     this._options.addition.adore.$subTrigger = triggerButtonAdore;
 
     triggerButtonAdore.on("click", () => {
-      const value = window.prompt(
+      const value = this._promptPercentage(
         this._host.i18n("adore.trigger.set"),
-        this._options.addition.adore.subTrigger.toFixed(2)
+        this._renderPercentage(this._options.addition.adore.subTrigger)
       );
 
       if (value !== null) {
-        this._host.updateOptions(
-          () => (this._options.addition.adore.subTrigger = parseFloat(value))
+        this._host.updateOptions(() => (this._options.addition.adore.subTrigger = value));
+        triggerButtonAdore[0].title = this._renderPercentage(
+          this._options.addition.adore.subTrigger
         );
-        triggerButtonAdore[0].title = this._options.addition.adore.subTrigger.toFixed(2);
       }
     });
 
@@ -304,16 +304,16 @@ export class ReligionSettingsUi extends SettingsSectionUi<ReligionSettings> {
     this._options.addition.autoPraise.$subTrigger = triggerButtonAutoPraise;
 
     triggerButtonAutoPraise.on("click", () => {
-      const value = window.prompt(
+      const value = this._promptPercentage(
         this._host.i18n("ui.trigger.set", [this._host.i18n("option.praise")]),
-        this._options.addition.autoPraise.subTrigger.toFixed(2)
+        this._renderPercentage(this._options.addition.autoPraise.subTrigger)
       );
 
       if (value !== null) {
-        this._host.updateOptions(
-          () => (this._options.addition.autoPraise.subTrigger = parseFloat(value))
+        this._host.updateOptions(() => (this._options.addition.autoPraise.subTrigger = value));
+        triggerButtonAutoPraise[0].title = this._renderPercentage(
+          this._options.addition.autoPraise.subTrigger
         );
-        triggerButtonAutoPraise[0].title = this._options.addition.autoPraise.subTrigger.toFixed(2);
       }
     });
 
@@ -419,20 +419,22 @@ export class ReligionSettingsUi extends SettingsSectionUi<ReligionSettings> {
 
   refreshUi(): void {
     mustExist(this._options.$enabled).prop("checked", this._options.enabled);
-    mustExist(this._options.$trigger)[0].title = this._options.trigger.toFixed(3);
+    mustExist(this._options.$trigger)[0].title = this._renderPercentage(this._options.trigger);
 
     mustExist(this._options.addition.adore.$enabled).prop(
       "checked",
       this._options.addition.adore.enabled
     );
-    mustExist(this._options.addition.adore.$subTrigger)[0].title =
-      this._options.addition.adore.subTrigger.toFixed(2);
+    mustExist(this._options.addition.adore.$subTrigger)[0].title = this._renderPercentage(
+      this._options.addition.adore.subTrigger
+    );
     mustExist(this._options.addition.autoPraise.$enabled).prop(
       "checked",
       this._options.addition.autoPraise.enabled
     );
-    mustExist(this._options.addition.autoPraise.$subTrigger)[0].title =
-      this._options.addition.autoPraise.subTrigger.toFixed(2);
+    mustExist(this._options.addition.autoPraise.$subTrigger)[0].title = this._renderPercentage(
+      this._options.addition.autoPraise.subTrigger
+    );
     mustExist(this._options.addition.bestUnicornBuilding.$enabled).prop(
       "checked",
       this._options.addition.bestUnicornBuilding.enabled
@@ -444,7 +446,9 @@ export class ReligionSettingsUi extends SettingsSectionUi<ReligionSettings> {
 
     for (const [name, option] of objectEntries(this._options.items)) {
       mustExist(option.$enabled).prop("checked", this._options.items[name].enabled);
-      mustExist(option.$max).text(this._host.i18n("ui.max", [this._options.items[name].max]));
+      mustExist(option.$max).text(
+        this._host.i18n("ui.max", [this._renderLimit(this._options.items[name].max)])
+      );
     }
   }
 }

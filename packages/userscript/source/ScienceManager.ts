@@ -1,9 +1,10 @@
 import { PolicySettings } from "./options/PolicySettings";
+import { TechSettings } from "./options/TechSettings";
 import { TabManager } from "./TabManager";
 import { objectEntries } from "./tools/Entries";
 import { cerror } from "./tools/Log";
 import { isNil } from "./tools/Maybe";
-import { ScienceTab } from "./types";
+import { PolicyInfo, ScienceTab, TechInfo } from "./types";
 import { UpgradeManager } from "./UpgradeManager";
 import { UserScript } from "./UserScript";
 import { WorkshopManager } from "./WorkshopManager";
@@ -18,12 +19,25 @@ export class ScienceManager extends UpgradeManager {
     this._workshopManager = new WorkshopManager(this._host);
   }
 
-  autoUnlock() {
+  async autoUnlock() {
     this.manager.render();
 
-    // These behave identically to the workshop uprades above.
-    const scienceUpgrades = this._host.gamePage.science.techs;
-    techLoop: for (const upgrade of scienceUpgrades) {
+    const techs = this._host.gamePage.science.techs;
+    const toUnlock = new Array<TechInfo>();
+
+    workLoop: for (const [item, options] of objectEntries(
+      (this._host.options.auto.unlock.items.techs as TechSettings).items
+    )) {
+      if (!options.enabled) {
+        continue;
+      }
+
+      const upgrade = techs.find(subject => subject.name === item);
+      if (isNil(upgrade)) {
+        cerror(`Tech '${item}' not found in game!`);
+        continue;
+      }
+
       if (upgrade.researched || !upgrade.unlocked) {
         continue;
       }
@@ -32,45 +46,50 @@ export class ScienceManager extends UpgradeManager {
       prices = this._host.gamePage.village.getEffectLeader("scientist", prices);
       for (const resource of prices) {
         if (this._workshopManager.getValueAvailable(resource.name, true) < resource.val) {
-          continue techLoop;
+          continue workLoop;
         }
       }
-      this.upgrade(upgrade, "science");
+
+      toUnlock.push(upgrade);
+    }
+
+    for (const item of toUnlock) {
+      await this.upgrade(item, "science");
     }
   }
 
-  autoPolicy() {
+  async autoPolicy() {
     this.manager.render();
 
     const policies = this._host.gamePage.science.policies;
-    const toResearch = [];
+    const toUnlock = new Array<PolicyInfo>();
 
-    for (const [policy] of objectEntries(
+    for (const [item, options] of objectEntries(
       (this._host.options.auto.unlock.items.policies as PolicySettings).items
     )) {
-      const targetPolicy = policies.find(policy => policy.name === policy.name);
-      if (isNil(targetPolicy)) {
-        cerror(`Policy '${policy}' not found in game!`);
+      if (!options.enabled) {
         continue;
       }
 
-      if (!targetPolicy.researched) {
-        if (targetPolicy.blocked) {
-          continue;
-        }
-        if (targetPolicy.unlocked) {
-          if (
-            targetPolicy.requiredLeaderJob === undefined ||
-            (this._host.gamePage.village.leader !== null &&
-              this._host.gamePage.village.leader.job === targetPolicy.requiredLeaderJob)
-          ) {
-            toResearch.push(targetPolicy);
-          }
+      const targetPolicy = policies.find(subject => subject.name === item);
+      if (isNil(targetPolicy)) {
+        cerror(`Policy '${item}' not found in game!`);
+        continue;
+      }
+
+      if (!targetPolicy.researched && !targetPolicy.blocked && targetPolicy.unlocked) {
+        if (
+          targetPolicy.requiredLeaderJob === undefined ||
+          (this._host.gamePage.village.leader !== null &&
+            this._host.gamePage.village.leader.job === targetPolicy.requiredLeaderJob)
+        ) {
+          toUnlock.push(targetPolicy);
         }
       }
     }
-    for (const polciy of toResearch) {
-      this.upgrade(polciy, "policy");
+
+    for (const item of toUnlock) {
+      await this.upgrade(item, "policy");
     }
   }
 }

@@ -81,18 +81,18 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
     option.$subTrigger = triggerButton;
 
     triggerButton.on("click", () => {
-      const value = window.prompt(
+      const value = this._promptPercentage(
         this._host.i18n("time.skip.trigger.set", []),
-        option.subTrigger.toFixed(2)
+        this._renderPercentage(option.subTrigger)
       );
 
       if (value !== null) {
-        this._host.updateOptions(() => (option.subTrigger = parseFloat(value)));
-        triggerButton[0].title = option.subTrigger.toFixed(2);
+        this._host.updateOptions(() => (option.subTrigger = value));
+        triggerButton[0].title = this._renderPercentage(option.subTrigger);
       }
     });
 
-    const maximunButton = $("<div/>", {
+    const maximumButton = $("<div/>", {
       id: "set-timeSkip-maximum",
       text: "⍐",
       title: this._host.i18n("ui.maximum"),
@@ -104,17 +104,17 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
         paddingRight: "5px",
       },
     }).data("option", option);
-    option.$maximum = maximunButton;
+    option.$maximum = maximumButton;
 
-    maximunButton.on("click", () => {
-      const value = window.prompt(
+    maximumButton.on("click", () => {
+      const value = this._promptLimit(
         this._host.i18n("ui.max.set", [this._host.i18n("option.time.skip")]),
         option.maximum.toFixed(0)
       );
 
       if (value !== null) {
-        this._host.updateOptions(() => (option.maximum = parseFloat(value)));
-        maximunButton[0].title = option.maximum.toFixed(0);
+        this._host.updateOptions(() => (option.maximum = value));
+        maximumButton[0].title = option.maximum.toFixed(0);
       }
     });
 
@@ -179,7 +179,7 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
     element.append(
       cyclesButton,
       seasonsButton,
-      maximunButton,
+      maximumButton,
       triggerButton,
       cyclesList,
       seasonsList
@@ -1024,14 +1024,14 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
     option.$subTrigger = triggerButton;
 
     triggerButton.on("click", () => {
-      const value = window.prompt(
+      const value = this._promptPercentage(
         this._host.i18n("ui.trigger.set", [label]),
-        option.subTrigger.toFixed(2)
+        this._renderPercentage(option.subTrigger)
       );
 
       if (value !== null) {
-        this._host.updateOptions(() => (option.subTrigger = parseFloat(value)));
-        triggerButton[0].title = option.subTrigger.toFixed(2);
+        this._host.updateOptions(() => (option.subTrigger = value));
+        triggerButton[0].title = this._renderPercentage(option.subTrigger);
       }
     });
     element.append(triggerButton);
@@ -1124,14 +1124,14 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
     option.$triggerForReset = minButton;
 
     minButton.on("click", () => {
-      const value = window.prompt(
+      const value = this._promptLimit(
         this._host.i18n("reset.check.trigger.set", [i18nName]),
-        option.triggerForReset.toFixed(2)
+        option.triggerForReset.toFixed(0)
       );
 
       if (value !== null) {
-        this._host.updateOptions(() => (option.triggerForReset = parseInt(value)));
-        minButton.text(this._host.i18n("ui.min", [option.triggerForReset]));
+        this._host.updateOptions(() => (option.triggerForReset = value));
+        minButton.text(this._host.i18n("ui.min", [this._renderLimit(option.triggerForReset)]));
       }
     });
 
@@ -1356,8 +1356,9 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
       "checked",
       this._options.items.accelerateTime.enabled
     );
-    mustExist(this._options.items.accelerateTime.$subTrigger)[0].title =
-      this._options.items.accelerateTime.subTrigger.toFixed(2);
+    mustExist(this._options.items.accelerateTime.$subTrigger)[0].title = this._renderPercentage(
+      this._options.items.accelerateTime.subTrigger
+    );
 
     mustExist(this._options.items.reset.$enabled).prop(
       "checked",
@@ -1368,8 +1369,9 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
       "checked",
       this._options.items.timeSkip.enabled
     );
-    mustExist(this._options.items.timeSkip.$subTrigger)[0].title =
-      this._options.items.timeSkip.subTrigger.toFixed(2);
+    mustExist(this._options.items.timeSkip.$subTrigger)[0].title = this._renderPercentage(
+      this._options.items.timeSkip.subTrigger
+    );
     mustExist(this._options.items.timeSkip.$autumn).prop(
       "checked",
       this._options.items.timeSkip.autumn
@@ -1403,7 +1405,9 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
         this._options.buildItems[name].checkForReset
       );
       mustExist(option.$triggerForReset).text(
-        this._host.i18n("ui.min", [this._options.buildItems[name].triggerForReset])
+        this._host.i18n("ui.min", [
+          this._renderLimit(this._options.buildItems[name].triggerForReset),
+        ])
       );
     }
     for (const [name, option] of objectEntries(this._options.religionItems)) {
@@ -1412,7 +1416,9 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
         this._options.religionItems[name].checkForReset
       );
       mustExist(option.$triggerForReset).text(
-        this._host.i18n("ui.min", [this._options.religionItems[name].triggerForReset])
+        this._host.i18n("ui.min", [
+          this._renderLimit(this._options.religionItems[name].triggerForReset),
+        ])
       );
     }
     for (const [name, option] of objectEntries(this._options.spaceItems)) {
@@ -1421,24 +1427,24 @@ export class TimeControlSettingsUi extends SettingsSectionUi<TimeControlSettings
         this._options.spaceItems[name].checkForReset
       );
       mustExist(option.$triggerForReset).text(
-        this._host.i18n("ui.min", [this._options.spaceItems[name].triggerForReset])
+        this._host.i18n("ui.min", [
+          this._renderLimit(this._options.spaceItems[name].triggerForReset),
+        ])
       );
     }
     for (const [name, option] of objectEntries(this._options.timeItems)) {
       mustExist(option.$checkForReset).prop("checked", this._options.timeItems[name].checkForReset);
       mustExist(option.$triggerForReset).text(
-        this._host.i18n("ui.min", [this._options.timeItems[name].triggerForReset])
+        this._host.i18n("ui.min", [
+          this._renderLimit(this._options.timeItems[name].triggerForReset),
+        ])
       );
     }
 
     for (const [name, option] of objectEntries(this._options.resources)) {
       mustExist(option.$stockForReset).text(
         this._host.i18n("resources.stock", [
-          option.stockForReset === Infinity
-            ? "∞"
-            : this._host.gamePage.getDisplayValueExt(
-                mustExist(this._options.resources[name]).stockForReset
-              ),
+          this._renderLimit(mustExist(this._options.resources[name]).stockForReset),
         ])
       );
     }

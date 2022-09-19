@@ -19,6 +19,7 @@ import {
   TabId,
   TranscendenceUpgradeInfo,
   TranscendenceUpgrades,
+  UpgradeInfo,
   ZiggurathUpgradeInfo,
   ZiggurathUpgrades,
 } from ".";
@@ -142,12 +143,14 @@ export type GamePage = {
    * The resource craft ratio indicates how many items you receive
    * as the result of a single craft. This is subject to a variety
    * of bonus effects.
+   *
    * @param name The resource to check.
    */
   getResCraftRatio: (name: ResourceCraftable) => number;
 
   /**
    * Determine how much of the given resource is produced per tick.
+   *
    * @param resName The resource to check.
    * @param withConversion Should resource convertions be taken into account?
    */
@@ -156,6 +159,7 @@ export type GamePage = {
   /**
    * Determine how much of the resource, per tick, is subject to be converted
    * into another resource. For example, smelters convert wood and minerals.
+   *
    * @param resName The resource to check.
    */
   getResourcePerTickConvertion: (resName: Resource) => number;
@@ -178,6 +182,10 @@ export type GamePage = {
   msg: (...args: Array<number | string>) => { span: HTMLElement };
   opts: {
     disableCMBR: boolean;
+    /**
+     * Should `confirm()` calls be skipped in the game?
+     */
+    noConfirm: boolean;
   };
   prestige: {
     /**
@@ -338,6 +346,12 @@ export type GamePage = {
   upgrade: (value: unknown) => void;
   ui: {
     activeTabId: TabId;
+    confirm: (
+      title: string,
+      message: string,
+      callbackOk: () => void,
+      callbackCancel: () => void
+    ) => void;
     render: () => void;
   };
   village: {
@@ -351,6 +365,7 @@ export type GamePage = {
     getJobLimit: (name: string) => number;
     /**
      * Get a list of resource consumptions per tick
+     *
      * @see getResProduction
      */
     getResConsumption: () => { catnip: number };
@@ -389,15 +404,6 @@ export type GamePage = {
     ) => { researched: boolean };
     getCraft: (name: ResourceCraftable) => CraftableInfo | undefined;
     getCraftPrice: (craft: CraftableInfo) => Array<Price>;
-    upgrades: Array<{
-      description: string;
-      effects: Record<string, number>;
-      label: string;
-      name: string;
-      prices: Array<Price>;
-      researched: boolean;
-      unlocked: boolean;
-      unlocks: { upgrades: Array<unknown> };
-    }>;
+    upgrades: Array<UpgradeInfo>;
   };
 };

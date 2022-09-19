@@ -1,4 +1,4 @@
-import { Job, Policy, Race, Resource, Season } from "../types";
+import { Job, Policy, Race, Resource, Season, Technology, Upgrade } from "../types";
 import { BonfireItem } from "./BonfireSettings";
 import { FilterItem } from "./FilterSettings";
 import { AllItems } from "./Options";
@@ -44,7 +44,7 @@ type ToggleLimitedJobItem = `toggle-limited-${Job}`;
 type ToggleLimitedRaceItem = `toggle-limited-${Race}`;
 type ToggleLimitedResourceItem = `toggle-limited-${Resource}`;
 type ToggleOptionsItem = `toggle-${OptionsItem}`;
-type TogglePolicyItem = `toggle-${Policy}`;
+type TogglePolicyItem = `toggle-policy-${Policy}`;
 type TogglePromoteLeader = `toggle-promote`;
 type ToggleRaceItem = `toggle-${Race}`;
 type ToggleRaceSeasonItem = `toggle-${Race}-${Season}`;
@@ -55,6 +55,7 @@ type ToggleResetSpaceItem = `toggle-reset-space-${SpaceItem}`;
 type ToggleResetTimeItem = `toggle-reset-time-${TimeItem}`;
 type ToggleResetUnicornItem = `toggle-reset-unicorn-${UnicornItem}`;
 type ToggleResourceItem = `toggle-${Resource}`;
+type ToggleTechItem = `toggle-tech-${Technology}`;
 type ToggleTimeControlCycleItem = `toggle-timeSkip-${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}`;
 type ToggleTimeControlItem = `toggle-${TimeControlItem}`;
 type ToggleTimeControlSeasonItem = `toggle-timeSkip-${Season}`;
@@ -64,6 +65,7 @@ type ToggleUnlockItem = `toggle-${ScienceItem}`;
 type ToggleUnlockRaces = "toggle-races";
 type ToggleUnlockMissions = "toggle-missions";
 type ToggleUnlockUpgrades = "toggle-upgrades";
+type ToggleUpgradeItem = `toggle-upgrade-${Upgrade}`;
 type ToggleUpgradeBuildings = "toggle-buildings";
 
 export type KittenStorageType = {
@@ -102,6 +104,7 @@ export type KittenStorageType = {
     Partial<Record<ToggleResetTimeItem, boolean>> &
     Partial<Record<ToggleResetUnicornItem, boolean>> &
     Partial<Record<ToggleResourceItem, boolean>> &
+    Partial<Record<ToggleTechItem, boolean>> &
     Partial<Record<ToggleTimeControlCycleItem, boolean>> &
     Partial<Record<ToggleTimeControlItem, boolean>> &
     Partial<Record<ToggleTimeControlSeasonItem, boolean>> &
@@ -111,7 +114,8 @@ export type KittenStorageType = {
     Partial<Record<ToggleUnlockMissions, boolean>> &
     Partial<Record<ToggleUnlockRaces, boolean>> &
     Partial<Record<ToggleUnlockUpgrades, boolean>> &
-    Partial<Record<ToggleUpgradeBuildings, boolean>>;
+    Partial<Record<ToggleUpgradeBuildings, boolean>> &
+    Partial<Record<ToggleUpgradeItem, boolean>>;
   resources: Partial<
     Record<
       Resource,

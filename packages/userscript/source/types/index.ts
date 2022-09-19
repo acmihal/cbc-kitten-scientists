@@ -1,4 +1,5 @@
 import { Building } from "./buildings";
+import { GamePage } from "./gamePage";
 import { ReligionUpgrades, TranscendenceUpgrades, ZiggurathUpgrades } from "./religion";
 import { SpaceBuildings } from "./space";
 import { ChronoForgeUpgrades, VoidSpaceUpgrades } from "./time";
@@ -109,6 +110,25 @@ export type Panel = {
   visible: boolean;
 };
 
+export type ButtonModel = {
+  enabled: boolean;
+  metadata: {
+    breakIronWill: boolean;
+    /**
+     * How many items of this can be built at any time?
+     * Used to limit Resource Retrieval to 100.
+     */
+    limitBuild?: number;
+    name: string;
+    unlocks: unknown;
+    upgrades: unknown;
+    val: number;
+  };
+  name: string;
+  prices: Array<Price>;
+  visible: boolean;
+};
+
 /**
  * Not necessarily a button, but a KG UI element.
  */
@@ -127,24 +147,7 @@ export type BuildButton<T = string> = {
   };
   domNode: HTMLDivElement;
   id: T;
-  model: {
-    enabled: boolean;
-    metadata: {
-      breakIronWill: boolean;
-      /**
-       * How many items of this can be built at any time?
-       * Used to limit Resource Retrieval to 100.
-       */
-      limitBuild?: number;
-      name: string;
-      unlocks: unknown;
-      upgrades: unknown;
-      val: number;
-    };
-    name: string;
-    prices: Array<Price>;
-    visible: boolean;
-  };
+  model: ButtonModel;
   onClick: () => void;
 };
 
@@ -164,6 +167,38 @@ export type Challenge =
   | "pacifism"
   | "winterIsComing";
 
+export type PolicyBtnController = {
+  new (game: GamePage): TechButtonController;
+  buyItem: (model: ButtonModel, event: unknown, callback: (success: boolean) => void) => void;
+};
+
+export type TechButtonController = {
+  new (game: GamePage): TechButtonController;
+  buyItem: (model: ButtonModel, event: unknown, callback: (success: boolean) => void) => void;
+};
+
+export type ClassList = {
+  ui: {
+    PolicyBtnController: PolicyBtnController;
+  };
+};
+
+export type ComInterface = {
+  nuclearunicorn: {
+    game: {
+      ui: {
+        TechButtonController: TechButtonController;
+      };
+    };
+  };
+};
+
+declare global {
+  const classes: ClassList;
+  const com: ComInterface;
+  const game: GamePage;
+}
+
 export * from "./buildings";
 export * from "./gamePage";
 export * from "./religion";
@@ -171,3 +206,4 @@ export * from "./science";
 export * from "./space";
 export * from "./time";
 export * from "./trading";
+export * from "./workshop";

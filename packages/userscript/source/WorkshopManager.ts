@@ -1,10 +1,10 @@
 import { CacheManager } from "./CacheManager";
-import { CraftSettingsItem } from "./options/CraftSettings";
+import { CraftSettingsItem } from "./options/WorkshopSettings";
 import { TabManager } from "./TabManager";
 import { objectEntries } from "./tools/Entries";
-import { cdebug } from "./tools/Log";
+import { cdebug, cerror } from "./tools/Log";
 import { isNil, mustExist } from "./tools/Maybe";
-import { Resource, ResourceCraftable } from "./types";
+import { Resource, ResourceCraftable, UpgradeInfo } from "./types";
 import { CraftableInfo, ResourceInfo } from "./types/craft";
 import { VillageTab } from "./types/village";
 import { UpgradeManager } from "./UpgradeManager";
@@ -19,17 +19,29 @@ export class WorkshopManager extends UpgradeManager {
     this.manager = new TabManager(this._host, "Workshop");
   }
 
-  autoUnlock() {
+  async autoUnlock() {
     if (!this._host.gamePage.tabs[3].visible) {
       return;
     }
 
     this.manager.render();
 
-    const workshopUpgrades = this._host.gamePage.workshop.upgrades;
-    // TODO: Filter out upgrades that are not beneficial when using KS, like workshop automation.
-    workLoop: for (const upgrade of workshopUpgrades) {
-      // If the upgrade is already purchased or not available yet, continue with the next one.
+    const upgrades = this._host.gamePage.workshop.upgrades;
+    const toUnlock = new Array<UpgradeInfo>();
+
+    workLoop: for (const [item, options] of objectEntries(
+      this._host.options.auto.craft.addition.unlockUpgrades.items
+    )) {
+      if (!options.enabled) {
+        continue;
+      }
+
+      const upgrade = upgrades.find(subject => subject.name === item);
+      if (isNil(upgrade)) {
+        cerror(`Upgrade '${item}' not found in game!`);
+        continue;
+      }
+
       if (upgrade.researched || !upgrade.unlocked) {
         continue;
       }
@@ -44,8 +56,12 @@ export class WorkshopManager extends UpgradeManager {
         }
       }
 
-      // If we can afford all prices, purchase the upgrade.
-      this.upgrade(upgrade, "workshop");
+      toUnlock.push(upgrade);
+      await this.upgrade(upgrade, "workshop");
+    }
+
+    for (const item of toUnlock) {
+      await this.upgrade(item, "workshop");
     }
   }
 

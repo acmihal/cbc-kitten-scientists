@@ -231,7 +231,7 @@ export class SpaceSettingsUi extends SettingsSectionUi<SpaceSettings> {
 
   refreshUi(): void {
     mustExist(this._options.$enabled).prop("checked", this._options.enabled);
-    mustExist(this._options.$trigger)[0].title = this._options.trigger.toFixed(3);
+    mustExist(this._options.$trigger)[0].title = this._renderPercentage(this._options.trigger);
 
     mustExist(this._options.addition.unlockMissions.$enabled).prop(
       "checked",
@@ -240,7 +240,9 @@ export class SpaceSettingsUi extends SettingsSectionUi<SpaceSettings> {
 
     for (const [name, option] of objectEntries(this._options.items)) {
       mustExist(option.$enabled).prop("checked", this._options.items[name].enabled);
-      mustExist(option.$max).text(this._host.i18n("ui.max", [this._options.items[name].max]));
+      mustExist(option.$max).text(
+        this._host.i18n("ui.max", [this._renderLimit(this._options.items[name].max)])
+      );
     }
   }
 }

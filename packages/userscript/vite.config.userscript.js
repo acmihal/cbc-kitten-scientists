@@ -15,25 +15,28 @@ function getDateString() {
   return `${year}${month}${day}`;
 }
 
-const filename = [
-  "kitten-scientists",
-  isDevBuild ? "-dev" : `-${manifest.version}`,
+const versionString = [
+  manifest.version,
+  isDevBuild ? "-dev" : "",
   isNightlyBuild ? `-${getDateString()}` : "",
   (isDevBuild || isNightlyBuild) && process.env.GITHUB_SHA
     ? `-${String(process.env.GITHUB_SHA).substring(0, 7)}`
     : "",
-  minify ? ".min" : "",
-  ".user.js",
 ].join("");
+
+const filename = ["kitten-scientists", `-${versionString}`, minify ? ".min" : "", ".user.js"].join(
+  ""
+);
 
 const KG_SAVEGAME = process.env.KG_SAVEGAME ?? null;
 const KS_SETTINGS = process.env.KS_SETTINGS ?? null;
+const KS_VERSION = JSON.stringify(versionString);
 
 export default defineConfig({
   plugins: [
     metablock({
       override: {
-        version: manifest.version,
+        version: versionString,
         description: manifest.description,
         homepage: manifest.homepage,
         supportURL: manifest.bugs.url,
@@ -59,5 +62,6 @@ export default defineConfig({
   define: {
     KG_SAVEGAME,
     KS_SETTINGS,
+    KS_VERSION,
   },
 });
